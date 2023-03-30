@@ -1,0 +1,15 @@
+C:\Users\trobbins\Desktop\testingAndStuff\cppAndCSTesting\grandCs2\ConwaysVoronoi\bin\Debug\net6.0\ConwaysVoronoi.exe
+C:\Users\trobbins\Desktop\testingAndStuff\cppAndCSTesting\grandCs2\ConwaysVoronoi\bin\Debug\net6.0\ConwaysVoronoi.deps.json
+C:\Users\trobbins\Desktop\testingAndStuff\cppAndCSTesting\grandCs2\ConwaysVoronoi\bin\Debug\net6.0\ConwaysVoronoi.runtimeconfig.json
+C:\Users\trobbins\Desktop\testingAndStuff\cppAndCSTesting\grandCs2\ConwaysVoronoi\bin\Debug\net6.0\ConwaysVoronoi.dll
+C:\Users\trobbins\Desktop\testingAndStuff\cppAndCSTesting\grandCs2\ConwaysVoronoi\bin\Debug\net6.0\ConwaysVoronoi.pdb
+C:\Users\trobbins\Desktop\testingAndStuff\cppAndCSTesting\grandCs2\ConwaysVoronoi\obj\Debug\net6.0\ConwaysVoronoi.csproj.AssemblyReference.cache
+C:\Users\trobbins\Desktop\testingAndStuff\cppAndCSTesting\grandCs2\ConwaysVoronoi\obj\Debug\net6.0\ConwaysVoronoi.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\trobbins\Desktop\testingAndStuff\cppAndCSTesting\grandCs2\ConwaysVoronoi\obj\Debug\net6.0\ConwaysVoronoi.AssemblyInfoInputs.cache
+C:\Users\trobbins\Desktop\testingAndStuff\cppAndCSTesting\grandCs2\ConwaysVoronoi\obj\Debug\net6.0\ConwaysVoronoi.AssemblyInfo.cs
+C:\Users\trobbins\Desktop\testingAndStuff\cppAndCSTesting\grandCs2\ConwaysVoronoi\obj\Debug\net6.0\ConwaysVoronoi.csproj.CoreCompileInputs.cache
+C:\Users\trobbins\Desktop\testingAndStuff\cppAndCSTesting\grandCs2\ConwaysVoronoi\obj\Debug\net6.0\ConwaysVoronoi.dll
+C:\Users\trobbins\Desktop\testingAndStuff\cppAndCSTesting\grandCs2\ConwaysVoronoi\obj\Debug\net6.0\refint\ConwaysVoronoi.dll
+C:\Users\trobbins\Desktop\testingAndStuff\cppAndCSTesting\grandCs2\ConwaysVoronoi\obj\Debug\net6.0\ConwaysVoronoi.pdb
+C:\Users\trobbins\Desktop\testingAndStuff\cppAndCSTesting\grandCs2\ConwaysVoronoi\obj\Debug\net6.0\ConwaysVoronoi.genruntimeconfig.cache
+C:\Users\trobbins\Desktop\testingAndStuff\cppAndCSTesting\grandCs2\ConwaysVoronoi\obj\Debug\net6.0\ref\ConwaysVoronoi.dll
