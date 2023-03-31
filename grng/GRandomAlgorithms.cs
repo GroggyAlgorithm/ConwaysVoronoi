@@ -31,6 +31,8 @@ public static class GRandomAlgorithms
         XnTohl,
         Xorshift64star
     };
+    
+    public static int GetAlgorithmCount() => Enum.GetNames(typeof(AlgorithmChoices)).Length;
 
     public delegate int _randomAlgo(int value);
 

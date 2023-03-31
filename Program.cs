@@ -1,12 +1,11 @@
 ﻿using System;
+using System.Threading;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 
 public static class ConwaysVoronoi
 {
-    
-    
-
     const string activeString = "\u2588";
     const string mountainString = "\u2589";
     const string inactiveString = "\u2591";
@@ -27,26 +26,33 @@ public static class ConwaysVoronoi
         {
             0,1 //up
         },
-        new int[2] {
+        new int[2] 
+        {
             1,0 //right
         },
-        new int[2] {
+        new int[2] 
+        {
             0,-1 //left
         },
-        new int[2] {
+        new int[2] 
+        {
             -1,0//down
         },
-        new int[2] {
+        new int[2] 
+        {
             1,1 //up right
         },
-        new int[2] {
+        new int[2] 
+        {
             -1,-1//down,left
         },
-        new int[2] {
+        new int[2] 
+        {
             1,-1//up left
         },
         
-        new int[2] {
+        new int[2] 
+        {
             -1,1//down right
         },
     };
@@ -60,43 +66,151 @@ public static class ConwaysVoronoi
     static int maxActiveCount = 200;
     static int neighborsToBeActive = 3;
     static float valueForActive = 1;
-    static int liveCount = 156;
-    static int width = 100;
-    static int height = 25;
+    static int startingAliveCount = 156;
+    static int width = 110;
+    static int height = 30;
     static int octaveCount = 2;
+
+    private const int MF_BYCOMMAND = 0x00000000;
+    public const int SC_CLOSE = 0xF060;
+    public const int SC_MINIMIZE = 0xF020;
+    public const int SC_MAXIMIZE = 0xF030;
+    public const int SC_SIZE = 0xF000;
+
+    [DllImport("user32.dll")]
+    public static extern int DeleteMenu(IntPtr hMenu, int nPosition, int wFlags);
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr GetSystemMenu(IntPtr hWnd, bool bRevert);
+
+    [DllImport("kernel32.dll", ExactSpelling = true)]
+    private static extern IntPtr GetConsoleWindow();
+
+    
+
+
+    static readonly Dictionary<string, string> possibleArgs = new Dictionary<string, string>()
+    {
+        {
+            "--he","\t\t: Displays this menu"
+        },
+        {
+            "--max","\t\t: The next integer passed will be maximum cells allowed to be alive"
+        },
+        {
+            "--seed","\t\t: The next integer passed will be the rng seed"
+        },
+        {
+            "--ne","\t\t: The next integer passed will be the amount of neighors for a cell"
+        },
+        {
+            "--val","\t\t: The next float passed will be maximum cells allowed to be alive"
+        },
+        {
+            "--starting","\t: The next integer passed will be the amount of cells to begin alive"
+        },
+        {
+            "--octave","\t: The next integer passed will be the amount of noise octaves to use"
+        },
+        {
+            "--gain","\t\t: The gain for the noise levels"
+        },
+        {
+            "--amp", "\t\t: The amplitude for the noise levels"
+        },
+        {
+            "--freq", "\t\t: The frequency for the noise levels"
+        },
+        {
+            "--scale", "\t: The scale for the noise levels"
+        },
+        {
+            "--dis", "\t\t: The displasement values for the Voronoi noise"
+        },
+        {
+            "--test", "\t\t: Prints a set of random values"
+        },
+        {
+            "--game", "\t\t: Runs Conways Game of Life"
+        }
+        ,
+        {
+            "--print", "\t: Prints a map set from noise values"
+        }
+        ,
+        {
+            "--algo", "\t\t: Sets the algorithm to use"
+        }
+        
+    };
+
 
 
     
 
+
+    /// <summary>
+    /// Main function
+    /// </summary>
+    /// <param name="args"></param>
     public static void Main(string[] args)
     {
         activeVN = new VoronoiNoise();
-        Console.Clear();
-
-        var savedColor = Console.ForegroundColor;
+        Console.CursorVisible = false;
+        var inactiveColor = Console.ForegroundColor;
         Console.Title = "Conways Voronoi";
+
+        StopResizing();
+
+        Console.SetWindowSize(width, height);
+
+
+        if(args.Length > 0)
+        {
+            Console.Clear();
+            bool isExitable = false;
+
+            for (var i = 0; i < args.Length && i < possibleArgs.Count; i+=1)
+            {
+                if(args[i] == "--he" || args[i] == "--game" || args[i] == "--print" || args[i] == "--test" || i >= args.Length - 1)
+                {
+                    SetSettingFromArg(args[i], "");
+
+                    if(args[i] == "--game" || args[i] == "--print" || args[i] == "--test")
+                    {
+                        isExitable = true;
+                    }
+                }
+                else
+                {
+                    SetSettingFromArg(args[i], args[i + 1]);
+                    i += 1;
+                }
+                
+                
+            }
+                
+            Console.WriteLine("Press enter to continue");
+            Console.ReadLine();
+
+            if(isExitable)
+            {
+                return;
+            }
+            
+        }
+        Console.Clear();
+        
+        
 
         for (; ; )
         {
             currentInput = "";
 
-            Console.SetWindowSize(width, height);
-            Console.WriteLine("------Conways Voronoi------");
-            Console.WriteLine("\nSelected Algorithm: " + activeVN._selected_algo);
-            Console.WriteLine("Diplacement of: " + activeVN.displacement);
-            Console.WriteLine("Scale of: " + activeVN.scale);
-            Console.WriteLine("Frequency of: " + activeVN.frequency);
-            Console.WriteLine("Amplitude of: " + activeVN.amplitude);
-            Console.WriteLine("Gain of: " + activeVN.gain);
-            Console.WriteLine("Seed of: " + activeVN.seed);
-            Console.WriteLine("Neighbors to be active: " + neighborsToBeActive);
-            Console.WriteLine("Minimum value to be active: " + valueForActive);
-            Console.WriteLine("Minimum game cells to start alive: " + liveCount);
-            Console.WriteLine("Maximum game cells allowed: " + maxActiveCount);
-            Console.WriteLine("Octave count of: " + octaveCount);
-            Console.WriteLine("\n");
+            
+            PrintSettings();
 
-            Console.WriteLine("Enter input(exit or x for exit, s for settings, p for map print, t for numerical test, r for run):");
+            Console.WriteLine("Enter input(exit or x for exit, s for settings, p for map print, t for numerical test, r for run): ");
             currentInput = Console.ReadLine().ToLower();
 
             if (currentInput != null)
@@ -104,6 +218,7 @@ public static class ConwaysVoronoi
                 if (currentInput == "exit" || currentInput == "x")
                 {
                     Console.WriteLine("Goodbye!");
+                    Console.Clear();
                     break;
                 }
 
@@ -117,9 +232,9 @@ public static class ConwaysVoronoi
                     case "p":
                         currentInput = "";
                         Console.Clear();
-                        BlankMapInit(ref activeMap, ref activeColors, height, width, savedColor);
-                        InitializeConwaysGameMaps(ref activeMap, ref activeColors, liveCount, savedColor, ConsoleColor.Green);
-                        RunConwaysIteration(ref activeMap, ref activeColors, savedColor, ConsoleColor.Green);
+                        BlankMapInit(ref activeMap, ref activeColors, height, width, inactiveColor);
+                        InitializeConwaysGameMaps(ref activeMap, ref activeColors, startingAliveCount, inactiveColor, ConsoleColor.Green);
+                        RunConwaysIteration(ref activeMap, ref activeColors, inactiveColor, ConsoleColor.Green);
                         break;
 
                     case "t":
@@ -141,33 +256,259 @@ public static class ConwaysVoronoi
                 currentInput = "";
             }
         }
+
+
     }
 
 
 
+    /// <summary>
+    /// Handles setting the arguments passed <inheritdoc this/>
+    /// </summary>
+    /// <param name="arg"></param>
+    /// <param name="argValue"></param>
+    static void SetSettingFromArg(string arg, string argValue)
+    {
+        bool showHelp = false;
+        
+        switch(arg)
+        {
+            case "--seed":
+                if (!int.TryParse(argValue, out var newSeed))
+                {
+                    showHelp = true;
+                }
+                else
+                {
+                    activeVN.SetSeed(newSeed);
+                }
+            break;
 
+            case "--max":
+                if (!int.TryParse(argValue, out var newMax))
+                {
+                    showHelp = true;
+                }
+                else
+                {
+                    maxActiveCount = newMax;
+                }
+            break;
+
+            case "--ne":
+                if (!int.TryParse(argValue, out var newNe))
+                {
+                    showHelp = true;
+                }
+                else
+                {
+                    neighborsToBeActive = newNe;
+                }
+            break;
+
+            case "--val":
+                if (!float.TryParse(argValue, out var newVal))
+                {
+                    showHelp = true;
+                }
+                else
+                {
+                    valueForActive = newVal;
+                }
+            break;
+
+            case "--starting":
+                if (!int.TryParse(argValue, out var newStart))
+                {
+                    showHelp = true;
+                }
+                else
+                {
+                    startingAliveCount = newStart;
+                }
+            break;
+
+            case "--octave":
+                if (!int.TryParse(argValue, out var newOcts))
+                {
+                    showHelp = true;
+                }
+                else
+                {
+                    octaveCount = newOcts;
+                }
+            break;
+
+            case "--algo":
+                if (!int.TryParse(argValue, out var algo))
+                {
+                    showHelp = true;
+                }
+                else if(algo < GRandomAlgorithms.GetAlgorithmCount())
+                {
+                    activeVN.SetAlgorithm((GRandomAlgorithms.AlgorithmChoices)algo);
+                }
+                else
+                {
+                    showHelp = true;
+                }
+            break;
+
+            case "--dis":
+                if (!float.TryParse(argValue, out var newDispl))
+                {
+                    showHelp = true;
+                }
+                else
+                {
+                    activeVN.displacement = newDispl;
+                }
+            break;
+
+            case "--scale":
+                if (!float.TryParse(argValue, out var sc))
+                {
+                    showHelp = true;
+                }
+                else
+                {
+                    activeVN.scale = sc;
+                }
+            break;
+
+            case "--freq":
+                if (!float.TryParse(argValue, out var fr))
+                {
+                    showHelp = true;
+                }
+                else
+                {
+                    activeVN.frequency = fr;
+                }
+            break;
+
+            case "--amp":
+                if (!float.TryParse(argValue, out var am))
+                {
+                    showHelp = true;
+                }
+                else
+                {
+                    activeVN.amplitude = am;
+                }
+            break;
+
+            case "--gain":
+                if (!float.TryParse(argValue, out var gn))
+                {
+                    showHelp = true;
+                }
+                else
+                {
+                    activeVN.gain = gn;
+                }
+            break;
+            
+            case "--print":
+                BlankMapInit(ref activeMap, ref activeColors, height, width, Console.ForegroundColor);
+                InitializeConwaysGameMaps(ref activeMap, ref activeColors, startingAliveCount, Console.ForegroundColor, ConsoleColor.Green);
+                RunConwaysIteration(ref activeMap, ref activeColors, Console.ForegroundColor, ConsoleColor.Green);
+            break;
+
+            case "--game":
+                RunConwaysThreads();
+            break;
+
+            case "--test":
+                Console.WriteLine("\nVoronoi Float Values\n");
+                for (var i = 0; i < 10; i++)
+                {
+                    Console.WriteLine("Float value " + i + ":" +activeVN.NextFloat());
+                }
+            break;
+
+
+
+            default:
+                showHelp = true;
+                break;
+
+        }
+
+        if(showHelp)
+        {
+            Console.WriteLine("\n\nBad Argument " + arg + " " + argValue );
+            Console.WriteLine("\n\t------Conways Voronoi------");
+            foreach(var kvp in possibleArgs)
+            {
+                Console.WriteLine(kvp.Key + " " + kvp.Value);
+            }
+
+            for (var i = 0; i < GRandomAlgorithms.GetAlgorithmCount(); i++)
+            {
+                Console.WriteLine("\t\t: " + i + " = " + (GRandomAlgorithms.AlgorithmChoices)i);
+            }
+
+            Console.WriteLine("\n\t------Conways Voronoi------\n");
+        }
+    }
+
+
+
+    /// <summary>
+    /// Disables all ability to resize screen manually
+    /// </summary>
+    static void StopResizing()
+    {
+        IntPtr handle = GetConsoleWindow();
+        IntPtr sysMenu = GetSystemMenu(handle, false);
+
+        if (handle != IntPtr.Zero)
+        {
+            // DeleteMenu(sysMenu, SC_CLOSE, MF_BYCOMMAND);
+            DeleteMenu(sysMenu, SC_MINIMIZE, MF_BYCOMMAND);
+            DeleteMenu(sysMenu, SC_MAXIMIZE, MF_BYCOMMAND);
+            DeleteMenu(sysMenu, SC_SIZE, MF_BYCOMMAND);
+        }
+    }
+
+
+
+    /// <summary>
+    /// Prints the settings view
+    /// </summary>
+    static void PrintSettings()
+    {
+        Console.WriteLine("\t\t------Conways Voronoi------");
+        Console.WriteLine("\n\tSelected Algorithm: " + activeVN._selected_algo);
+        Console.WriteLine("\tDiplacement of: " + activeVN.displacement);
+        Console.WriteLine("\tScale of: " + activeVN.scale);
+        Console.WriteLine("\tFrequency of: " + activeVN.frequency);
+        Console.WriteLine("\tAmplitude of: " + activeVN.amplitude);
+        Console.WriteLine("\tGain of: " + activeVN.gain);
+        Console.WriteLine("\tSeed of: " + activeVN.seed);
+        Console.WriteLine("\tNeighbors to be active: " + neighborsToBeActive);
+        Console.WriteLine("\tMinimum value to be active: " + valueForActive);
+        Console.WriteLine("\tMinimum game cells to start alive: " + startingAliveCount);
+        Console.WriteLine("\tMaximum game cells allowed: " + maxActiveCount);
+        Console.WriteLine("\tOctave count of: " + octaveCount);
+        Console.WriteLine("\n");
+    }
+
+
+    
+    /// <summary>
+    /// Handles the settings menus
+    /// </summary>
     static void EnterSettings()
     {
         while (true)
         {
             Console.Clear();
-            Console.WriteLine("------Conways Voronoi------");
-            Console.WriteLine("\nSelected Algorithm: " + activeVN._selected_algo);
-            Console.WriteLine("Diplacement of: " + activeVN.displacement);
-            Console.WriteLine("Scale of: " + activeVN.scale);
-            Console.WriteLine("Frequency of: " + activeVN.frequency);
-            Console.WriteLine("Amplitude of: " + activeVN.amplitude);
-            Console.WriteLine("Gain of: " + activeVN.gain);
-            Console.WriteLine("Seed of: " + activeVN.seed);
-            Console.WriteLine("Neighbors to be active: " + neighborsToBeActive);
-            Console.WriteLine("Minimum value to be active: " + valueForActive);
-            Console.WriteLine("Minimum game cells to start alive: " + liveCount);
-            Console.WriteLine("Maximum game cells allowed: " + maxActiveCount);
-            Console.WriteLine("Octave count of: " + octaveCount);
-            Console.WriteLine("\n");
+            PrintSettings();
             Console.WriteLine("Enter input(exit or x for exit, 0 for octaves, 1 for displacement, 2 for algorithm, 3 for seed,");
             Console.WriteLine("4 for The amount of neighbors to be active, 5 for The minimum value need to start as active,");
-            Console.WriteLine("6 for starting alive count, 7 for Noise Scale, 8 for Noise Frequency, 9 for Noise Amplitude, 10 for Noise Gain,\n11 for Maximum Alive Count):");
+            Console.WriteLine("6 for starting alive count, 7 for Noise Scale, 8 for Noise Frequency, 9 for Noise Amplitude,\n10 for Noise Gain,\n11 for Maximum Alive Count)\n\n:");
 
 
 
@@ -210,7 +551,8 @@ public static class ConwaysVoronoi
                         case 2:
                             Console.WriteLine("Enter an Interger to select algorithm:");
                             string options = "";
-                            for (var i = 0; i < 14; i++)
+                            
+                            for (var i = 0; i < GRandomAlgorithms.GetAlgorithmCount(); i++)
                             {
                                 options += "\nOption " + i + ": ";
                                 options += (GRandomAlgorithms.AlgorithmChoices)i;
@@ -220,7 +562,7 @@ public static class ConwaysVoronoi
 
                             if (int.TryParse(newInput, out var algoOut))
                             {
-                                if (algoOut < 14)
+                                if (algoOut < GRandomAlgorithms.GetAlgorithmCount())
                                 {
                                     activeVN.SetAlgorithm((GRandomAlgorithms.AlgorithmChoices)algoOut);
                                 }
@@ -274,10 +616,10 @@ public static class ConwaysVoronoi
                         case 6:
                             Console.WriteLine("Enter an Integer for the amount of cells to start alive in conways game:");
                             newInput = Console.ReadLine();
-                            if (!int.TryParse(newInput, out liveCount))
+                            if (!int.TryParse(newInput, out startingAliveCount))
                             {
                                 Console.WriteLine("Bad Input");
-                                liveCount = 100;
+                                startingAliveCount = 100;
                             }
                             break;
 
@@ -358,6 +700,14 @@ public static class ConwaysVoronoi
 
 
 
+    /// <summary>
+    /// Initializes maps to blank
+    /// </summary>
+    /// <param name="activeMap">The map of active values</param>
+    /// <param name="activeColors">The map of active colors</param>
+    /// <param name="height">The height of maps</param>
+    /// <param name="width">The width of the maps</param>
+    /// <param name="defaultColor">The color to default to</param>
     static void BlankMapInit(ref string[,] activeMap, ref ConsoleColor[,] activeColors, int height, int width, ConsoleColor defaultColor)
     {
         activeMap = new string[height,width];
@@ -387,9 +737,17 @@ public static class ConwaysVoronoi
 
 
 
-    static void InitializeConwaysGameMaps(ref string[,] activeMap, ref ConsoleColor[,] activeColors, int liveCount, ConsoleColor defaultColor, ConsoleColor activeColor)
+    /// <summary>
+    /// Initializes the map for conways game
+    /// </summary>
+    /// <param name="activeMap">Reference to the active map for active valus</param>
+    /// <param name="activeColors">Reference to the active colors</param>
+    /// <param name="startingAliveCount">The alive count when starting</param>
+    /// <param name="defaultColor">The default and the inactive color</param>
+    /// <param name="activeColor">The console color when active</param>
+    static void InitializeConwaysGameMaps(ref string[,] activeMap, ref ConsoleColor[,] activeColors, int startingAliveCount, ConsoleColor defaultColor, ConsoleColor activeColor)
     {
-        BlankMapInit(ref activeMap, ref activeColors, height, width, defaultColor);
+        BlankMapInit(ref activeMap, ref activeColors, height-2, width-1, defaultColor);
 
         float[,]? nm = activeVN.SampleNoiseMap(activeMap.GetLength(1) + 1, activeMap.GetLength(0) + 1, octaveCount);
             
@@ -408,13 +766,13 @@ public static class ConwaysVoronoi
             }
         }
 
-        while (liveCount >= 0)
+        while (startingAliveCount >= 0)
         {
             var currentX = activeVN.Range(4, activeMap.GetLength(1) - 3);
             var currentY = activeVN.Range(4, activeMap.GetLength(0) - 3);
             activeMap[currentY, currentX] = activeString;
             activeColors[currentY, currentX] = activeColor;
-            liveCount--;
+            startingAliveCount--;
 
             foreach(var dir in Directions2D)
             {
@@ -426,7 +784,7 @@ public static class ConwaysVoronoi
                         {
                             activeMap[dir[0] + currentY, dir[1] + currentX] = activeString;
                             activeColors[dir[0] + currentY, dir[1] + currentX] = activeColor;
-                            liveCount--;
+                            startingAliveCount--;
                         }
                     }
                 }
@@ -443,27 +801,32 @@ public static class ConwaysVoronoi
 
 
 
-
-    static void RunConwaysIteration(ref string[,] activeMap, ref ConsoleColor[,] activeColors, ConsoleColor savedColor, ConsoleColor activeColor)
+    /// <summary>
+    /// Runs an iteration of conways game
+    /// </summary>
+    /// <param name="activeMap">Reference to the active map for active valus</param>
+    /// <param name="activeColors">Reference to the active colors</param>
+    /// <param name="inactiveColor">The console color when inactive</param>
+    /// <param name="activeColor">The console color when active</param>
+    static void RunConwaysIteration(ref string[,] activeMap, ref ConsoleColor[,] activeColors, ConsoleColor inactiveColor, ConsoleColor activeColor)
     {
         int totalActiveCount = 0;
-       
-
-        for(var y = 1; y < activeMap.GetLength(0) - 2; y++)
+        Console.SetCursorPosition(0,0);
+        Console.ForegroundColor = inactiveColor;
+        Console.Write("\tCulling Events happen after " + maxActiveCount + " cells are alive.\n\tPress s To Start/Stop, Enter r to exit, or p to restart");
+        Console.SetCursorPosition(3,3);
+        Console.Write(mapSideTopLeft);
+        Console.SetCursorPosition(activeMap.GetLength(1) - 2,3);
+        Console.Write(mapSideTopRight);
+        for(var y = 4; y < activeMap.GetLength(0) - 3 && y < Console.BufferHeight; y++)
         {
-            for(var x = 1; x < activeMap.GetLength(1) - 2; x++)
+            for(var x = 4; x < activeMap.GetLength(1) - 3 && x < Console.BufferWidth; x++)
             {
                 var activeNeighborsCount = 0;
 
                 if(totalActiveCount > maxActiveCount)
                 {
-                    KillRandomUntilCountMet(ref totalActiveCount, savedColor);
-                    // x = activeMap.GetLength(1);
-                    // y = activeMap.GetLength(0);
-                    // break;
-                    // activeMap[y, x] = inactiveString;
-                    // activeColors[y, x] = savedColor;
-                    // continue;
+                    KillRandomUntilCountMet(ref totalActiveCount, inactiveColor);
                 }
 
                 foreach(var dir in Directions2D)
@@ -490,7 +853,7 @@ public static class ConwaysVoronoi
                     else if (activeNeighborsCount <= 1 || activeNeighborsCount > neighborsToBeActive)
                     {
                         activeMap[y, x] = inactiveString;
-                        activeColors[y, x] = savedColor;
+                        activeColors[y, x] = inactiveColor;
 
 
                     }
@@ -498,7 +861,7 @@ public static class ConwaysVoronoi
                 else
                 {
                     activeMap[y, x] = inactiveString;
-                    activeColors[y, x] = savedColor;
+                    activeColors[y, x] = inactiveColor;
                 }
 
                 Console.SetCursorPosition(x,y);
@@ -509,15 +872,19 @@ public static class ConwaysVoronoi
 
 
 
-        
-
+        // Console.SetCursorPosition(1,Console.BufferHeight - 20);
         Console.Write("\r");
         Thread.Sleep(10);
     }
 
 
 
-    static void KillRandomUntilCountMet(ref int totalActiveCount, ConsoleColor savedColor)
+    /// <summary>
+    /// Randomly kills active positions until the total active count is less than the max active count
+    /// </summary>
+    /// <param name="totalActiveCount"></param>
+    /// <param name="inactiveColor"></param>
+    static void KillRandomUntilCountMet(ref int totalActiveCount, ConsoleColor inactiveColor)
     {
         if(totalActiveCount > maxActiveCount)
         {
@@ -532,7 +899,7 @@ public static class ConwaysVoronoi
                 {
                     totalActiveCount--;
                     activeMap[ny, nx] = inactiveString;
-                    activeColors[ny, nx] = savedColor;
+                    activeColors[ny, nx] = inactiveColor;
                 }
             }
         }
@@ -540,62 +907,80 @@ public static class ConwaysVoronoi
 
 
 
+    /// <summary>
+    /// Runs conways game
+    /// </summary>
     static void RunConwaysGame()
     {
-        var savedColor = Console.ForegroundColor;
-
+        
+        var inactiveColor = Console.ForegroundColor;
+        bool isRunning = false;
         activeMap = new string[height,width];
         activeColors =  new ConsoleColor[height,width];
         currentInput = "";
-
+        Console.SetWindowSize(width,height+10);
         Console.Clear();
         Console.OutputEncoding = System.Text.Encoding.UTF8;
         Console.CursorVisible = false;
-        Console.SetWindowSize(width+10,height+10);
 
-        InitializeConwaysGameMaps(ref activeMap, ref activeColors, liveCount, savedColor, aliveColor);
+        InitializeConwaysGameMaps(ref activeMap, ref activeColors, startingAliveCount, inactiveColor, aliveColor);
         Thread.Sleep(5);
         Console.Clear();
-        RunConwaysIteration(ref activeMap, ref activeColors, savedColor, aliveColor);
-        Console.SetCursorPosition(0, Console.BufferHeight - 1);
-        // Console.SetCursorPosition(0,width - 1);
-        Console.WriteLine("Press s To Start, Enter r to stop or p to restart:\n\n");
-
-        while(currentInput != "s" && currentInput != "r" && currentInput != "x" && currentInput != "exit" && currentInput != "p");
+        RunConwaysIteration(ref activeMap, ref activeColors, inactiveColor, aliveColor);
+        // Console.SetCursorPosition(0, Console.BufferHeight - 5);
+        // Console.Write("Culling Events happen after " + maxActiveCount + " cells are alive. Press s To Start/Stop, Enter r to stop or p to restart");
 
         while(currentInput != "r")
         {
-            
+
+            if(Console.BufferHeight < activeMap.GetLength(0) || Console.BufferWidth < activeMap.GetLength(1))
+            {
+                Console.SetWindowSize(width,height+10);
+            }
+
             if(currentInput == "r" || currentInput == "x" || currentInput == "exit")
             {
                 break;
             }
+            else if(currentInput == "s")
+            {
+                isRunning = !isRunning;
+                RunConwaysIteration(ref activeMap, ref activeColors, inactiveColor, aliveColor);
+                currentInput = "";
+                // Console.SetCursorPosition(0, Console.BufferHeight - 5);
+                // Console.Write("Culling Events happen after " + maxActiveCount + " cells are alive. Press s To Start/Stop, Enter r to stop or p to restart");
+            }
             else if (currentInput == "p")
             {
-                InitializeConwaysGameMaps(ref activeMap, ref activeColors, liveCount, savedColor, aliveColor);
+                InitializeConwaysGameMaps(ref activeMap, ref activeColors, startingAliveCount, inactiveColor, aliveColor);
                 Thread.Sleep(5);
                 Console.Clear();
-                // Console.WriteLine("Enter r to stop or p to restart:\n\n");
-                RunConwaysIteration(ref activeMap, ref activeColors, savedColor, aliveColor);
+                RunConwaysIteration(ref activeMap, ref activeColors, inactiveColor, aliveColor);
                 Thread.Sleep(5);
-                Console.SetCursorPosition(0, Console.BufferHeight - 1);
-                Console.WriteLine("Press s To Start, Enter r to stop or p to restart:\n\n");
+                // Console.SetCursorPosition(0, Console.BufferHeight - 5);
+                // Console.Write("Culling Events happen after " + maxActiveCount + " cells are alive. Press s To Start/Stop, Enter r to stop or p to restart");
                 currentInput = "";
-                // while(currentInput != "s" && currentInput != "r" && currentInput != "x" && currentInput != "exit");
+                isRunning = false;
             }
-            else
+            else if(isRunning == true)
             {
-                RunConwaysIteration(ref activeMap, ref activeColors, savedColor, aliveColor);
+                RunConwaysIteration(ref activeMap, ref activeColors, inactiveColor, aliveColor);
             }
+
+
+
 
         }
     
     
-        Console.ForegroundColor = savedColor;
+        Console.ForegroundColor = inactiveColor;
     }
 
 
 
+    /// <summary>
+    /// Launches the threads for conways game
+    /// </summary>
     static void RunConwaysThreads()
     {
         try
@@ -635,19 +1020,27 @@ public static class ConwaysVoronoi
 
 
 
+
+    /// <summary>
+    /// Input listener to run while conways game is running
+    /// </summary>
     static void RunningInputListener()
     {
+        
+
         while(currentInput != "r")
         {
-            currentInput = Console.ReadLine().ToLower();
-            if(!String.IsNullOrWhiteSpace(currentInput))
+            
+
+            //If key is available...
+            if(Console.KeyAvailable)
             {
+                currentInput = Console.ReadLine().ToLower();
+
                 if(currentInput == "r" || currentInput == "x" || currentInput == "exit")
                 {
                     break;
                 }
-                Console.Clear();
-                
             }
 
             Thread.Sleep(10);
