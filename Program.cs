@@ -479,7 +479,7 @@ public static class ConwaysVoronoi
     /// </summary>
     static void PrintSettings()
     {
-        Console.WriteLine("\t\t------Conways Voronoi------");
+        Console.WriteLine("\n\n\t\t------Conways Voronoi------");
         Console.WriteLine("\n\tSelected Algorithm: " + activeVN._selected_algo);
         Console.WriteLine("\tDiplacement of: " + activeVN.displacement);
         Console.WriteLine("\tScale of: " + activeVN.scale);
@@ -811,13 +811,10 @@ public static class ConwaysVoronoi
     static void RunConwaysIteration(ref string[,] activeMap, ref ConsoleColor[,] activeColors, ConsoleColor inactiveColor, ConsoleColor activeColor)
     {
         int totalActiveCount = 0;
-        Console.SetCursorPosition(0,0);
         Console.ForegroundColor = inactiveColor;
+        Console.SetCursorPosition(0,0);
         Console.Write("\tCulling Events happen after " + maxActiveCount + " cells are alive.\n\tPress s To Start/Stop, Enter r to exit, or p to restart");
-        Console.SetCursorPosition(3,3);
-        Console.Write(mapSideTopLeft);
-        Console.SetCursorPosition(activeMap.GetLength(1) - 2,3);
-        Console.Write(mapSideTopRight);
+
         for(var y = 4; y < activeMap.GetLength(0) - 3 && y < Console.BufferHeight; y++)
         {
             for(var x = 4; x < activeMap.GetLength(1) - 3 && x < Console.BufferWidth; x++)
