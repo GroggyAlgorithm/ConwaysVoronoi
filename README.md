@@ -1,2 +1,2 @@
 # ConwaysVoronoi
-Conways Game of Life + Voronoi
+Conways Game of Life + Voronoi + my personal rng's
